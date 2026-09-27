@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Cámara de Venta</title>
   <style>
     * {
@@ -13,34 +16,31 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Altura dinámica exacta para móviles (100dvh) */
     html, body {
       width: 100%;
-      height: 100%;
       height: 100dvh;
       overflow: hidden;
-      background-color: #000000;
-      color: #ffffff;
-      position: fixed;
+      background: #000;
+      color: #fff;
     }
 
-    .app-container {
+    .app-wrap {
+      position: relative;
       width: 100%;
-      height: 100%;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
-      position: relative;
     }
 
-    /* Barra superior translúcida flotante */
+    /* Barra superior */
     .top-bar {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       padding: 12px 16px;
-      z-index: 20;
-      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+      z-index: 30;
+      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
     }
 
     .input-nota {
@@ -49,78 +49,61 @@
       border: 1.5px solid #388bfd;
       border-radius: 10px;
       padding: 10px 14px;
-      color: #ffffff;
+      color: #fff;
       font-size: 14px;
       outline: none;
-      backdrop-filter: blur(8px);
     }
-    .input-nota::placeholder {
-      color: #8b949e;
-    }
+    .input-nota::placeholder { color: #8b949e; }
 
-    /* Visor a pantalla completa */
+    /* Visor */
     .camera-frame {
-      flex: 1;
       width: 100%;
       height: 100%;
-      position: relative;
-      background: #000000;
-      overflow: hidden;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      background: #000;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    video#videoStream {
+    video#videoStream, img#fotoPreview {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
+    img#fotoPreview { display: none; object-fit: contain; }
+    canvas#canvasSnapshot { display: none; }
 
-    img#fotoPreview {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: none;
-      background: #000000;
-    }
-
-    canvas#canvasSnapshot {
-      display: none;
-    }
-
-    /* Barra inferior con margen para la barra de navegación de Android */
+    /* Barra inferior elevada para evitar barra de Android */
     .bottom-bar {
       position: absolute;
-      bottom: 0;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 38px);
       left: 0;
       width: 100%;
-      padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 16px));
-      z-index: 20;
-      background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+      padding: 0 20px;
+      z-index: 30;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
-    /* Botón disparador visible y centrado */
+    /* Botón disparador visible */
     .btn-disparo {
-      width: 72px;
-      height: 72px;
+      width: 74px;
+      height: 74px;
       border-radius: 50%;
       background: #ffffff;
-      border: 5px solid #388bfd;
-      box-shadow: 0 0 20px rgba(56, 139, 253, 0.6);
+      border: 6px solid #388bfd;
+      box-shadow: 0 0 20px rgba(56, 139, 253, 0.7);
       cursor: pointer;
       outline: none;
-      transition: transform 0.1s ease;
     }
-    .btn-disparo:active {
-      transform: scale(0.90);
-    }
+    .btn-disparo:active { transform: scale(0.92); }
 
-    /* Opciones post-disparo */
     .action-group {
       width: 100%;
       display: none;
@@ -141,7 +124,7 @@
     .btn-enviar {
       flex: 1;
       background: #238636;
-      color: #ffffff;
+      color: #fff;
       border: none;
       border-radius: 12px;
       padding: 14px;
@@ -150,22 +133,16 @@
       cursor: pointer;
       box-shadow: 0 4px 14px rgba(35, 134, 54, 0.5);
     }
-    .btn-enviar:disabled {
-      background: #1b4725;
-      color: #8b949e;
-      cursor: not-allowed;
-    }
+    .btn-enviar:disabled { background: #1b4725; color: #8b949e; cursor: not-allowed; }
 
-    /* Notificación de estado flotante */
     #statusBox {
       font-size: 14px;
       font-weight: 600;
       text-align: center;
       display: none;
-      padding: 6px 14px;
+      padding: 8px 16px;
       border-radius: 20px;
-      backdrop-filter: blur(8px);
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.75);
     }
     .st-loading { color: #58a6ff; display: block !important; }
     .st-ok { color: #3fb950; display: block !important; }
@@ -174,27 +151,21 @@
 </head>
 <body>
 
-  <div class="app-container">
-    <!-- 1. Campo de nota superior -->
+  <div class="app-wrap">
     <div class="top-bar">
-      <input type="text" id="notaInput" class="input-nota" placeholder="Nota o cliente opcional (ej: Venta 1)">
+      <input type="text" id="notaInput" class="input-nota" placeholder="Nota opcional (ej: Pedido 1)">
     </div>
 
-    <!-- 2. Visor central de cámara -->
     <div class="camera-frame">
       <video id="videoStream" autoplay playsinline muted></video>
       <img id="fotoPreview" alt="Captura">
       <canvas id="canvasSnapshot"></canvas>
     </div>
 
-    <!-- 3. Controles inferiores con margen de seguridad -->
     <div class="bottom-bar">
       <div id="statusBox"></div>
-
-      <!-- Disparador -->
       <button type="button" class="btn-disparo" id="btnDisparar" onclick="capturar()"></button>
 
-      <!-- Opciones post-disparo -->
       <div class="action-group" id="grupoAcciones">
         <button type="button" class="btn-repetir" onclick="repetir()">🔄 Otra</button>
         <button type="button" class="btn-enviar" id="btnEnviar" onclick="enviar()">✓ Sumar y Enviar</button>
@@ -203,8 +174,7 @@
   </div>
 
   <script>
-    // ⚠️ COLOCA AQUÍ TU URL /exec DE APPS SCRIPT
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCj_v-jB0oZj6scGHg1pZrTl7Z1qm1DRBU6XmmpqQyPkANNqZYt_tFBz4ygJGJk7TgFg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwt5oRfGMMtxEztz7k8WKj4DiWXMM1ij0GP1QMzzE3eJ0OlbsLvWx83U9XUjOhMVx9Bag/exec";
 
     let base64Comprimido = "";
     let streamActual = null;
@@ -224,7 +194,7 @@
         mostrarEstado("", "");
       } catch (err) {
         mostrarEstado("Acceso a cámara requerido", "st-error");
-        alert("Activa los permisos de la cámara en el navegador para continuar.");
+        alert("Activa los permisos de la cámara en el navegador.");
       }
     }
 
@@ -249,7 +219,7 @@
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, w, h);
 
-      base64Comprimido = canvas.toDataURL('image/jpeg', 0.8);
+      base64Comprimido = canvas.toDataURL('image/jpeg', 0.85);
 
       video.style.display = "none";
       preview.src = base64Comprimido;
@@ -274,7 +244,7 @@
       const nota = document.getElementById('notaInput').value.trim();
 
       btn.disabled = true;
-      mostrarEstado("⏳ Leyendo números y guardando...", "st-loading");
+      mostrarEstado("⏳ Sumando valores manuscritos...", "st-loading");
 
       const payload = {
         nota: nota,
@@ -291,7 +261,7 @@
         const data = await res.json();
 
         if (data && data.status === "ok") {
-          mostrarEstado("✓ ¡Total: $" + data.total + "! Abriendo WhatsApp...", "st-ok");
+          mostrarEstado("✓ Total: $" + Number(data.total).toLocaleString('es-CL'), "st-ok");
           setTimeout(() => {
             window.location.href = data.urlWhatsApp;
           }, 400);
@@ -299,12 +269,12 @@
           throw new Error(data ? data.message : "Error");
         }
       } catch (err) {
-        mostrarEstado("✓ Procesado. Abriendo WhatsApp...", "st-ok");
+        mostrarEstado("✓ Abriendo WhatsApp...", "st-ok");
         const fallbackMsg = "Hola, adjunto el comprobante de venta.";
         const waUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent(fallbackMsg);
         setTimeout(() => {
           window.location.href = waUrl;
-        }, 600);
+        }, 500);
       }
     }
 
