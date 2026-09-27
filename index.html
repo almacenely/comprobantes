@@ -2,54 +2,171 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Cámara de Venta</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #0d1117; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-    /* Barra superior para notas */
-    .top-bar { padding: 12px 16px; background: #161b22; display: flex; gap: 8px; border-bottom: 2px solid #30363d; z-index: 10; }
-    .input-nota { 
-      flex: 1; background: #0d1117; border: 1.5px solid #388bfd; border-radius: 8px; 
-      padding: 10px 14px; color: #ffffff; font-size: 15px; outline: none; 
-    }
-    .input-nota::placeholder { color: #8b949e; }
-
-    /* Visor de cámara en vivo */
-    .camera-frame { flex: 1; position: relative; background: #000000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    video#videoStream { width: 100%; height: 100%; object-fit: cover; }
-    img#fotoPreview { width: 100%; height: 100%; object-fit: contain; display: none; background: #000; }
-    canvas#canvasSnapshot { display: none; }
-
-    /* Barra de controles inferior */
-    .bottom-bar { 
-      padding: 20px 16px; background: #161b22; display: flex; flex-direction: column; 
-      align-items: center; gap: 12px; border-top: 2px solid #30363d; z-index: 10; 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    /* Botón disparador */
+    /* Altura dinámica exacta para móviles (100dvh) */
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #000000;
+      color: #ffffff;
+      position: fixed;
+    }
+
+    .app-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Barra superior translúcida flotante */
+    .top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 12px 16px;
+      z-index: 20;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+    }
+
+    .input-nota {
+      width: 100%;
+      background: rgba(22, 27, 34, 0.85);
+      border: 1.5px solid #388bfd;
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #ffffff;
+      font-size: 14px;
+      outline: none;
+      backdrop-filter: blur(8px);
+    }
+    .input-nota::placeholder {
+      color: #8b949e;
+    }
+
+    /* Visor a pantalla completa */
+    .camera-frame {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #000000;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video#videoStream {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    img#fotoPreview {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+      background: #000000;
+    }
+
+    canvas#canvasSnapshot {
+      display: none;
+    }
+
+    /* Barra inferior con margen para la barra de navegación de Android */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 16px));
+      z-index: 20;
+      background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Botón disparador visible y centrado */
     .btn-disparo {
-      width: 72px; height: 72px; border-radius: 50%; background: #ffffff; border: 5px solid #388bfd;
-      box-shadow: 0 0 15px rgba(56, 139, 253, 0.5); cursor: pointer; outline: none;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 5px solid #388bfd;
+      box-shadow: 0 0 20px rgba(56, 139, 253, 0.6);
+      cursor: pointer;
+      outline: none;
+      transition: transform 0.1s ease;
     }
-    .btn-disparo:active { transform: scale(0.92); }
+    .btn-disparo:active {
+      transform: scale(0.90);
+    }
 
-    /* Controles tras capturar foto */
-    .action-group { width: 100%; display: none; gap: 10px; }
+    /* Opciones post-disparo */
+    .action-group {
+      width: 100%;
+      display: none;
+      gap: 12px;
+    }
+
     .btn-repetir {
-      background: #21262d; color: #f0f6fc; border: 1.5px solid #8b949e;
-      border-radius: 10px; padding: 14px 20px; font-weight: 700; font-size: 15px; cursor: pointer;
+      background: #21262d;
+      color: #f0f6fc;
+      border: 1.5px solid #8b949e;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
     }
-    .btn-enviar {
-      flex: 1; background: #238636; color: #ffffff; border: none;
-      border-radius: 10px; padding: 14px; font-weight: 700; font-size: 16px; cursor: pointer;
-      box-shadow: 0 4px 12px rgba(35, 134, 54, 0.4);
-    }
-    .btn-enviar:disabled { background: #1b4725; color: #8b949e; cursor: not-allowed; }
 
-    /* Notificación de estado */
-    #statusBox { font-size: 13px; font-weight: 600; text-align: center; display: none; }
+    .btn-enviar {
+      flex: 1;
+      background: #238636;
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(35, 134, 54, 0.5);
+    }
+    .btn-enviar:disabled {
+      background: #1b4725;
+      color: #8b949e;
+      cursor: not-allowed;
+    }
+
+    /* Notificación de estado flotante */
+    #statusBox {
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      display: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.6);
+    }
     .st-loading { color: #58a6ff; display: block !important; }
     .st-ok { color: #3fb950; display: block !important; }
     .st-error { color: #f85149; display: block !important; }
@@ -57,40 +174,41 @@
 </head>
 <body>
 
-  <!-- 1. Campo de nota superior -->
-  <div class="top-bar">
-    <input type="text" id="notaInput" class="input-nota" placeholder="Nota o cliente opcional (ej: Venta 1)">
-  </div>
+  <div class="app-container">
+    <!-- 1. Campo de nota superior -->
+    <div class="top-bar">
+      <input type="text" id="notaInput" class="input-nota" placeholder="Nota o cliente opcional (ej: Venta 1)">
+    </div>
 
-  <!-- 2. Visor central -->
-  <div class="camera-frame">
-    <video id="videoStream" autoplay playsinline muted></video>
-    <img id="fotoPreview" alt="Captura">
-    <canvas id="canvasSnapshot"></canvas>
-  </div>
+    <!-- 2. Visor central de cámara -->
+    <div class="camera-frame">
+      <video id="videoStream" autoplay playsinline muted></video>
+      <img id="fotoPreview" alt="Captura">
+      <canvas id="canvasSnapshot"></canvas>
+    </div>
 
-  <!-- 3. Controles inferiores -->
-  <div class="bottom-bar">
-    <div id="statusBox"></div>
+    <!-- 3. Controles inferiores con margen de seguridad -->
+    <div class="bottom-bar">
+      <div id="statusBox"></div>
 
-    <!-- Disparador -->
-    <button type="button" class="btn-disparo" id="btnDisparar" onclick="capturar()"></button>
+      <!-- Disparador -->
+      <button type="button" class="btn-disparo" id="btnDisparar" onclick="capturar()"></button>
 
-    <!-- Opciones post-disparo -->
-    <div class="action-group" id="grupoAcciones">
-      <button type="button" class="btn-repetir" onclick="repetir()">🔄 Otra</button>
-      <button type="button" class="btn-enviar" id="btnEnviar" onclick="enviar()">✓ Sumar y Enviar</button>
+      <!-- Opciones post-disparo -->
+      <div class="action-group" id="grupoAcciones">
+        <button type="button" class="btn-repetir" onclick="repetir()">🔄 Otra</button>
+        <button type="button" class="btn-enviar" id="btnEnviar" onclick="enviar()">✓ Sumar y Enviar</button>
+      </div>
     </div>
   </div>
 
   <script>
-    // ⚠️ PEGA AQUÍ LA URL DE TU APPS SCRIPT (/exec) DE LA NUEVA CUENTA
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwt5oRfGMMtxEztz7k8WKj4DiWXMM1ij0GP1QMzzE3eJ0OlbsLvWx83U9XUjOhMVx9Bag/exec";
+    // ⚠️ COLOCA AQUÍ TU URL /exec DE APPS SCRIPT
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCj_v-jB0oZj6scGHg1pZrTl7Z1qm1DRBU6XmmpqQyPkANNqZYt_tFBz4ygJGJk7TgFg/exec";
 
     let base64Comprimido = "";
     let streamActual = null;
 
-    // Inicia la cámara automáticamente al entrar
     window.addEventListener('DOMContentLoaded', encenderCamara);
 
     async function encenderCamara() {
@@ -133,7 +251,6 @@
 
       base64Comprimido = canvas.toDataURL('image/jpeg', 0.8);
 
-      // Congelar y mostrar vista previa
       video.style.display = "none";
       preview.src = base64Comprimido;
       preview.style.display = "block";
@@ -199,4 +316,3 @@
   </script>
 </body>
 </html>
-
