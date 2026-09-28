@@ -1,200 +1,31 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>Cámara de Venta</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100dvh;
-      overflow: hidden;
-      background: #000;
-      color: #fff;
-    }
-
-    .app-wrap {
-      position: relative;
-      width: 100%;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Barra superior */
-    .top-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 12px 16px;
-      z-index: 30;
-      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
-    }
-
-    .input-nota {
-      width: 100%;
-      background: rgba(22, 27, 34, 0.85);
-      border: 1.5px solid #388bfd;
-      border-radius: 10px;
-      padding: 10px 14px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-    }
-    .input-nota::placeholder { color: #8b949e; }
-
-    /* Visor */
-    .camera-frame {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 10;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    video#videoStream, img#fotoPreview {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    img#fotoPreview { display: none; object-fit: contain; }
-    canvas#canvasSnapshot { display: none; }
-
-    /* Barra inferior elevada para evitar barra de Android */
-    .bottom-bar {
-      position: absolute;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 38px);
-      left: 0;
-      width: 100%;
-      padding: 0 20px;
-      z-index: 30;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-    }
-
-    /* Botón disparador visible */
-    .btn-disparo {
-      width: 74px;
-      height: 74px;
-      border-radius: 50%;
-      background: #ffffff;
-      border: 6px solid #388bfd;
-      box-shadow: 0 0 20px rgba(56, 139, 253, 0.7);
-      cursor: pointer;
-      outline: none;
-    }
-    .btn-disparo:active { transform: scale(0.92); }
-
-    .action-group {
-      width: 100%;
-      display: none;
-      gap: 12px;
-    }
-
-    .btn-repetir {
-      background: #21262d;
-      color: #f0f6fc;
-      border: 1.5px solid #8b949e;
-      border-radius: 12px;
-      padding: 14px 20px;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    .btn-enviar {
-      flex: 1;
-      background: #238636;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      padding: 14px;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(35, 134, 54, 0.5);
-    }
-    .btn-enviar:disabled { background: #1b4725; color: #8b949e; cursor: not-allowed; }
-
-    #statusBox {
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      display: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      background: rgba(0, 0, 0, 0.75);
-    }
-    .st-loading { color: #58a6ff; display: block !important; }
-    .st-ok { color: #3fb950; display: block !important; }
-    .st-error { color: #f85149; display: block !important; }
-  </style>
-</head>
-<body>
-
-  <div class="app-wrap">
-    <div class="top-bar">
-      <input type="text" id="notaInput" class="input-nota" placeholder="Nota opcional (ej: Pedido 1)">
-    </div>
-
-    <div class="camera-frame">
-      <video id="videoStream" autoplay playsinline muted></video>
-      <img id="fotoPreview" alt="Captura">
-      <canvas id="canvasSnapshot"></canvas>
-    </div>
-
-    <div class="bottom-bar">
-      <div id="statusBox"></div>
-      <button type="button" class="btn-disparo" id="btnDisparar" onclick="capturar()"></button>
-
-      <div class="action-group" id="grupoAcciones">
-        <button type="button" class="btn-repetir" onclick="repetir()">🔄 Otra</button>
-        <button type="button" class="btn-enviar" id="btnEnviar" onclick="enviar()">✓ Sumar y Enviar</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0imf3_wRBZgztnru9QmEaC2j3WOUDCNIa_knauF9awm0ccIGDHy1ARafTxnTCKv80HA/exec";
+<script>
+    const SCRIPT_URL = https://script.google.com/macros/s/AKfycbw0imf3_wRBZgztnru9QmEaC2j3WOUDCNIa_knauF9awm0ccIGDHy1ARafTxnTCKv80HA/exec";
 
     let base64Comprimido = "";
     let streamActual = null;
 
     window.addEventListener('DOMContentLoaded', encenderCamara);
 
+    // Cuando regresas de WhatsApp a la pestaña, resetear automáticamente a la cámara
+    window.addEventListener('pageshow', function() {
+      resetearTodo();
+    });
+
     async function encenderCamara() {
       const video = document.getElementById('videoStream');
       mostrarEstado("Iniciando cámara...", "st-loading");
 
       try {
-        streamActual = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } },
-          audio: false
-        });
+        if (!streamActual) {
+          streamActual = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } },
+            audio: false
+          });
+        }
         video.srcObject = streamActual;
         mostrarEstado("", "");
       } catch (err) {
         mostrarEstado("Acceso a cámara requerido", "st-error");
-        alert("Activa los permisos de la cámara en el navegador.");
       }
     }
 
@@ -225,17 +56,37 @@
       preview.src = base64Comprimido;
       preview.style.display = "block";
 
+      // Asegurar que el botón verde esté reactivado y listo
+      const btn = document.getElementById('btnEnviar');
+      btn.disabled = false;
+
       document.getElementById('btnDisparar').style.display = "none";
       document.getElementById('grupoAcciones').style.display = "flex";
     }
 
     function repetir() {
-      base64Comprimido = "";
-      document.getElementById('fotoPreview').style.display = "none";
-      document.getElementById('videoStream').style.display = "block";
+      resetearTodo();
+    }
 
-      document.getElementById('grupoAcciones').style.display = "none";
-      document.getElementById('btnDisparar').style.display = "block";
+    function resetearTodo() {
+      base64Comprimido = "";
+
+      // Reactivar el botón verde SIEMPRE
+      const btn = document.getElementById('btnEnviar');
+      if (btn) btn.disabled = false;
+
+      // Ocultar foto congelada y mostrar visor en vivo
+      const preview = document.getElementById('fotoPreview');
+      const video = document.getElementById('videoStream');
+      if (preview) preview.style.display = "none";
+      if (video) video.style.display = "block";
+
+      // Cambiar botones a modo disparo
+      const grupo = document.getElementById('grupoAcciones');
+      const disparar = document.getElementById('btnDisparar');
+      if (grupo) grupo.style.display = "none";
+      if (disparar) disparar.style.display = "block";
+
       mostrarEstado("", "");
     }
 
@@ -243,6 +94,7 @@
       const btn = document.getElementById('btnEnviar');
       const nota = document.getElementById('notaInput').value.trim();
 
+      // Desactivar temporalmente mientras la IA procesa
       btn.disabled = true;
       mostrarEstado("⏳ Sumando valores manuscritos...", "st-loading");
 
@@ -262,9 +114,15 @@
 
         if (data && data.status === "ok") {
           mostrarEstado("✓ Total: $" + Number(data.total).toLocaleString('es-CL'), "st-ok");
+          
+          // Limpiar el campo de nota para la siguiente venta
+          document.getElementById('notaInput').value = "";
+
           setTimeout(() => {
             window.location.href = data.urlWhatsApp;
-          }, 400);
+            // Reactivar por si el usuario vuelve enseguida
+            btn.disabled = false;
+          }, 350);
         } else {
           throw new Error(data ? data.message : "Error");
         }
@@ -272,9 +130,11 @@
         mostrarEstado("✓ Abriendo WhatsApp...", "st-ok");
         const fallbackMsg = "Hola, adjunto el comprobante de venta.";
         const waUrl = "whatsapp://send?text=" + encodeURIComponent(fallbackMsg);
+        
         setTimeout(() => {
           window.location.href = waUrl;
-        }, 500);
+          btn.disabled = false;
+        }, 400);
       }
     }
 
@@ -284,5 +144,3 @@
       b.innerText = msg;
     }
   </script>
-</body>
-</html>
