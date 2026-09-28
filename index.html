@@ -174,7 +174,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbylx7IVVHcIpwU2NucOZ3bkfS1KQNLwZJPuIQRt7G9dRntm8sapygsd6PTzyX7HsVNd6w/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0imf3_wRBZgztnru9QmEaC2j3WOUDCNIa_knauF9awm0ccIGDHy1ARafTxnTCKv80HA/exec";
 
     let base64Comprimido = "";
     let streamActual = null;
@@ -271,7 +271,7 @@
       } catch (err) {
         mostrarEstado("✓ Abriendo WhatsApp...", "st-ok");
         const fallbackMsg = "Hola, adjunto el comprobante de venta.";
-        const waUrl = "https://api.whatsapp.com/send?text=" + encodeURIComponent(fallbackMsg);
+        const waUrl = "whatsapp://send?text=" + encodeURIComponent(fallbackMsg);
         setTimeout(() => {
           window.location.href = waUrl;
         }, 500);
