@@ -1,317 +1,143 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Cámara de Venta</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lector de Comprobantes</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100dvh;
-      overflow: hidden;
-      background: #000000;
-      color: #ffffff;
-    }
-
-    .app-wrap {
-      position: relative;
-      width: 100%;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Barra superior con nota */
-    .top-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 12px 16px;
-      z-index: 30;
-      background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
-    }
-
-    .input-nota {
-      width: 100%;
-      background: rgba(22, 27, 34, 0.85);
-      border: 1.5px solid #388bfd;
-      border-radius: 10px;
-      padding: 10px 14px;
-      color: #ffffff;
-      font-size: 14px;
-      outline: none;
-    }
-    .input-nota::placeholder { color: #8b949e; }
-
-    /* Visor de la cámara */
-    .camera-frame {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 10;
-      background: #000000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    video#videoStream, img#fotoPreview {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    img#fotoPreview { display: none; object-fit: contain; }
-    canvas#canvasSnapshot { display: none; }
-
-    /* Barra inferior elevada para Android */
-    .bottom-bar {
-      position: absolute;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 36px);
-      left: 0;
-      width: 100%;
-      padding: 0 20px;
-      z-index: 30;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-    }
-
-    /* Disparador blanco grande */
-    .btn-disparo {
-      width: 74px;
-      height: 74px;
-      border-radius: 50%;
-      background: #ffffff;
-      border: 6px solid #388bfd;
-      box-shadow: 0 0 20px rgba(56, 139, 253, 0.7);
-      cursor: pointer;
-      outline: none;
-    }
-    .btn-disparo:active { transform: scale(0.92); }
-
-    .action-group {
-      width: 100%;
-      display: none;
-      gap: 12px;
-    }
-
-    .btn-repetir {
-      background: #21262d;
-      color: #f0f6fc;
-      border: 1.5px solid #8b949e;
-      border-radius: 12px;
-      padding: 14px 20px;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    .btn-enviar {
-      flex: 1;
-      background: #238636;
-      color: #ffffff;
-      border: none;
-      border-radius: 12px;
-      padding: 14px;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(35, 134, 54, 0.5);
-    }
-    .btn-enviar:disabled { background: #1b4725; color: #8b949e; cursor: not-allowed; }
-
-    #statusBox {
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      display: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      background: rgba(0, 0, 0, 0.8);
-    }
-    .st-loading { color: #58a6ff; display: block !important; }
-    .st-ok { color: #3fb950; display: block !important; }
-    .st-error { color: #f85149; display: block !important; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; justify-content: space-between; align-items: center; padding: 16px; }
+    h2 { font-size: 1.1rem; color: #aaa; margin-bottom: 8px; }
+    .camera-container { width: 100%; max-width: 420px; flex: 1; position: relative; border-radius: 16px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
+    video, img { width: 100%; height: 100%; object-fit: cover; }
+    #canvasSnapshot { display: none; }
+    .badge-total { position: absolute; bottom: 16px; background: rgba(0, 0, 0, 0.8); border: 1px solid #25D366; color: #25D366; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 1.1rem; display: none; }
+    .controls { width: 100%; max-width: 420px; margin-top: 16px; display: flex; gap: 12px; }
+    button { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-capturar { background-color: #007AFF; color: #fff; }
+    .btn-otra { background-color: #333; color: #fff; display: none; }
+    .btn-enviar { background-color: #25D366; color: #fff; display: none; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
-  <div class="app-wrap">
-    <div class="top-bar">
-      <input type="text" id="notaInput" class="input-nota" placeholder="Nota opcional (ej: Pedido 1)">
-    </div>
+  <h2>Lector de Mostrador</h2>
 
-    <div class="camera-frame">
-      <video id="videoStream" autoplay playsinline muted></video>
-      <img id="fotoPreview" alt="Captura">
-      <canvas id="canvasSnapshot"></canvas>
-    </div>
-
-    <div class="bottom-bar">
-      <div id="statusBox"></div>
-      <button type="button" class="btn-disparo" id="btnDisparar" onclick="capturar()"></button>
-
-      <div class="action-group" id="grupoAcciones">
-        <button type="button" class="btn-repetir" onclick="repetir()">🔄 Otra</button>
-        <button type="button" class="btn-enviar" id="btnEnviar" onclick="enviar()">✓ Sumar y Enviar</button>
-      </div>
-    </div>
+  <div class="camera-container">
+    <video id="videoElement" autoplay playsinline></video>
+    <img id="fotoPreview" style="display: none;" alt="Captura">
+    <canvas id="canvasSnapshot"></canvas>
+    <div id="badgeTotal" class="badge-total">✓ Total: $0</div>
   </div>
 
-  <!-- Enlace oculto para saltar a WhatsApp directo sin popup -->
-  <a id="waBridge" style="display:none;"></a>
+  <div class="controls">
+    <button id="btnCapturar" class="btn-capturar" onclick="capturarFoto()">📷 Capturar</button>
+    <button id="btnOtra" class="btn-otra" onclick="reiniciarCamara()">🔄 Otra</button>
+    <button id="btnEnviar" class="btn-enviar" onclick="procesarYEnviar()">✓ Sumar y Enviar</button>
+  </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyq4iRt12ICGKiuUNlXZQF7_ZZb4WBx9iT4u77zy12AwNeif_gRYFLN3j8AaArrnfEgBw/exec";
+    // Configuración
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyFeK9-FkJJRemOSNtilhz8WxXXCZdVDUNgDVIZ5xclRb7OjoY3SkSHgJZX4qyE-UAtCw/exec";
+    const TELEFONO_DUENOS = "569XXXXXXXX"; // Número con código de país (ej: 56912345678)
 
-    let base64Comprimido = "";
-    let streamActual = null;
+    const video = document.getElementById('videoElement');
+    const fotoPreview = document.getElementById('fotoPreview');
+    const canvas = document.getElementById('canvasSnapshot');
+    const btnCapturar = document.getElementById('btnCapturar');
+    const btnOtra = document.getElementById('btnOtra');
+    const btnEnviar = document.getElementById('btnEnviar');
+    const badgeTotal = document.getElementById('badgeTotal');
 
-    window.addEventListener('DOMContentLoaded', encenderCamara);
+    let stream = null;
+    let base64Capturada = "";
 
-    // Cuando regresas de WhatsApp, reiniciar la cámara de inmediato
-    window.addEventListener('pageshow', function() {
-      resetearTodo();
-    });
-
-    async function encenderCamara() {
-      const video = document.getElementById('videoStream');
-      mostrarEstado("Iniciando cámara...", "st-loading");
-
+    // Iniciar cámara trasera automáticamente
+    async function iniciarCamara() {
       try {
-        if (!streamActual) {
-          streamActual = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } },
-            audio: false
-          });
-        }
-        video.srcObject = streamActual;
-        mostrarEstado("", "");
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        video.srcObject = stream;
       } catch (err) {
-        mostrarEstado("Permiso de cámara requerido", "st-error");
+        alert("Error al acceder a la cámara: " + err.message);
       }
     }
 
-    function capturar() {
-      const video = document.getElementById('videoStream');
-      const canvas = document.getElementById('canvasSnapshot');
-      const preview = document.getElementById('fotoPreview');
-
-      const maxDim = 1200;
-      let w = video.videoWidth || 1280;
-      let h = video.videoHeight || 720;
-      if (w > h && w > maxDim) {
-        h = Math.round((h * maxDim) / w);
-        w = maxDim;
-      } else if (h > maxDim) {
-        w = Math.round((w * maxDim) / h);
-        h = maxDim;
-      }
-
-      canvas.width = w;
-      canvas.height = h;
+    function capturarFoto() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, w, h);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      base64Comprimido = canvas.toDataURL('image/jpeg', 0.85);
+      base64Capturada = canvas.toDataURL('image/jpeg', 0.85);
 
+      fotoPreview.src = base64Capturada;
+      fotoPreview.style.display = "block";
       video.style.display = "none";
-      preview.src = base64Comprimido;
-      preview.style.display = "block";
 
-      const btn = document.getElementById('btnEnviar');
-      btn.disabled = false;
-
-      document.getElementById('btnDisparar').style.display = "none";
-      document.getElementById('grupoAcciones').style.display = "flex";
+      btnCapturar.style.display = "none";
+      btnOtra.style.display = "block";
+      btnEnviar.style.display = "block";
     }
 
-    function repetir() {
-      resetearTodo();
+    function reiniciarCamara() {
+      fotoPreview.style.display = "none";
+      video.style.display = "block";
+      badgeTotal.style.display = "none";
+
+      btnCapturar.style.display = "block";
+      btnOtra.style.display = "none";
+      btnEnviar.style.display = "none";
+      btnEnviar.disabled = false;
+      btnEnviar.textContent = "✓ Sumar y Enviar";
     }
 
-    function resetearTodo() {
-      base64Comprimido = "";
-
-      const btn = document.getElementById('btnEnviar');
-      if (btn) btn.disabled = false;
-
-      const preview = document.getElementById('fotoPreview');
-      const video = document.getElementById('videoStream');
-      if (preview) preview.style.display = "none";
-      if (video) video.style.display = "block";
-
-      const grupo = document.getElementById('grupoAcciones');
-      const disparar = document.getElementById('btnDisparar');
-      if (grupo) grupo.style.display = "none";
-      if (disparar) disparar.style.display = "block";
-
-      mostrarEstado("", "");
-    }
-
-    // Abre WhatsApp directamente en Android sin confirmación del navegador
-    function saltarAWhatsApp(url) {
-      const link = document.getElementById('waBridge');
-      link.href = url;
-      link.click();
-    }
-
-    async function enviar() {
-      const btn = document.getElementById('btnEnviar');
-      const nota = document.getElementById('notaInput').value.trim();
-
-      btn.disabled = true;
-      mostrarEstado("⏳ Sumando valores manuscritos...", "st-loading");
-
-      const payload = {
-        nota: nota,
-        fotoBase64: base64Comprimido
-      };
+    async function procesarYEnviar() {
+      btnEnviar.disabled = true;
+      btnEnviar.textContent = "⏳ Leyendo...";
 
       try {
-        const res = await fetch(SCRIPT_URL, {
+        const respuesta = await fetch(URL_APPS_SCRIPT, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ image: base64Capturada })
         });
 
-        const data = await res.json();
+        const data = await respuesta.json();
 
-        if (data && data.status === "ok") {
-          mostrarEstado("✓ Total: $" + Number(data.total).toLocaleString('es-CL'), "st-ok");
-          document.getElementById('notaInput').value = "";
+        if (data.status === "success" && data.total > 0) {
+          badgeTotal.textContent = "✓ Total: $" + Number(data.total).toLocaleString("es-CL");
+          badgeTotal.style.display = "block";
 
-          // Redirección directa por clic nativo
-          saltarAWhatsApp(data.urlWhatsApp);
-          btn.disabled = false;
+          // Formato del mensaje para WhatsApp con el link de la foto
+          const mensaje = `*DETALLE DE VENTA*\n` +
+                          `${data.desglose}\n\n` +
+                          `*TOTAL: $${Number(data.total).toLocaleString("es-CL")}*\n\n` +
+                          `📸 *Foto comprobante:* ${data.urlFoto}`;
+
+          const urlWa = `https://wa.me/${TELEFONO_DUENOS}?text=${encodeURIComponent(mensaje)}`;
+          
+          // Redirigir a WhatsApp
+          setTimeout(() => {
+            window.location.href = urlWa;
+          }, 600);
+
         } else {
-          throw new Error(data ? data.message : "Error");
+          alert("No se detectaron números. Intenta tomar la foto más cerca o con mejor luz.");
+          btnEnviar.disabled = false;
+          btnEnviar.textContent = "✓ Reintentar";
         }
       } catch (err) {
-        mostrarEstado("✓ Abriendo WhatsApp...", "st-ok");
-        const fallbackMsg = "Hola, adjunto el comprobante de venta.";
-        saltarAWhatsApp("whatsapp://send?text=" + encodeURIComponent(fallbackMsg));
-        btn.disabled = false;
+        alert("Error de conexión: " + err.message);
+        btnEnviar.disabled = false;
+        btnEnviar.textContent = "✓ Sumar y Enviar";
       }
     }
 
-    function mostrarEstado(msg, cls) {
-      const b = document.getElementById('statusBox');
-      b.className = cls;
-      b.innerText = msg;
-    }
+    window.onload = iniciarCamara;
   </script>
 </body>
 </html>
