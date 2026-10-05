@@ -11,7 +11,7 @@
     .camera-container { width: 100%; max-width: 420px; flex: 1; position: relative; border-radius: 16px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
     video, img { width: 100%; height: 100%; object-fit: cover; }
     #canvasSnapshot { display: none; }
-    .badge-total { position: absolute; bottom: 16px; background: rgba(0, 0, 0, 0.8); border: 1px solid #25D366; color: #25D366; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 1.1rem; display: none; }
+    .badge-total { position: absolute; bottom: 16px; background: rgba(0, 0, 0, 0.85); border: 1px solid #25D366; color: #25D366; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 1.1rem; display: none; }
     .controls { width: 100%; max-width: 420px; margin-top: 16px; display: flex; gap: 12px; }
     button { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-capturar { background-color: #007AFF; color: #fff; }
@@ -34,13 +34,12 @@
   <div class="controls">
     <button id="btnCapturar" class="btn-capturar" onclick="capturarFoto()">📷 Capturar</button>
     <button id="btnOtra" class="btn-otra" onclick="reiniciarCamara()">🔄 Otra</button>
-    <button id="btnEnviar" class="btn-enviar" onclick="procesarYEnviar()">✓ Sumar y Enviar</button>
+    <button id="btnEnviar" class="btn-enviar" onclick="procesarYCompartir()">✓ Sumar y Compartir</button>
   </div>
 
   <script>
-    // Configuración
+    // Configura tu URL de Google Apps Script
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyFeK9-FkJJRemOSNtilhz8WxXXCZdVDUNgDVIZ5xclRb7OjoY3SkSHgJZX4qyE-UAtCw/exec";
-    const TELEFONO_DUENOS = "569XXXXXXXX"; // Número con código de país (ej: 56912345678)
 
     const video = document.getElementById('videoElement');
     const fotoPreview = document.getElementById('fotoPreview');
@@ -52,8 +51,8 @@
 
     let stream = null;
     let base64Capturada = "";
+    let blobImagen = null;
 
-    // Iniciar cámara trasera automáticamente
     async function iniciarCamara() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -74,6 +73,11 @@
 
       base64Capturada = canvas.toDataURL('image/jpeg', 0.85);
 
+      // Convertir en Blob directamente en RAM (sin escribir en disco)
+      canvas.toBlob((blob) => {
+        blobImagen = blob;
+      }, 'image/jpeg', 0.85);
+
       fotoPreview.src = base64Capturada;
       fotoPreview.style.display = "block";
       video.style.display = "none";
@@ -92,14 +96,15 @@
       btnOtra.style.display = "none";
       btnEnviar.style.display = "none";
       btnEnviar.disabled = false;
-      btnEnviar.textContent = "✓ Sumar y Enviar";
+      btnEnviar.textContent = "✓ Sumar y Compartir";
     }
 
-    async function procesarYEnviar() {
+    async function procesarYCompartir() {
       btnEnviar.disabled = true;
       btnEnviar.textContent = "⏳ Leyendo...";
 
       try {
+        // Enviar al Apps Script para calcular la suma
         const respuesta = await fetch(URL_APPS_SCRIPT, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -112,28 +117,42 @@
           badgeTotal.textContent = "✓ Total: $" + Number(data.total).toLocaleString("es-CL");
           badgeTotal.style.display = "block";
 
-          // Formato del mensaje para WhatsApp con el link de la foto
-          const mensaje = `*DETALLE DE VENTA*\n` +
-                          `${data.desglose}\n\n` +
-                          `*TOTAL: $${Number(data.total).toLocaleString("es-CL")}*\n\n` +
-                          `📸 *Foto comprobante:* ${data.urlFoto}`;
+          // Formato del pie de foto para el chat
+          const textoMensaje = `*DETALLE DE VENTA*\n` +
+                               `${data.desglose}\n\n` +
+                               `*TOTAL: $${Number(data.total).toLocaleString("es-CL")}*`;
 
-          const urlWa = `https://wa.me/${TELEFONO_DUENOS}?text=${encodeURIComponent(mensaje)}`;
-          
-          // Redirigir a WhatsApp
-          setTimeout(() => {
+          // Crear archivo virtual en RAM
+          const archivoFoto = new File([blobImagen], "comprobante.jpg", { type: "image/jpeg" });
+
+          // Verificar si el navegador soporta compartir archivos nativos
+          if (navigator.canShare && navigator.canShare({ files: [archivoFoto] })) {
+            await navigator.share({
+              files: [archivoFoto],
+              text: textoMensaje,
+              title: "Comprobante de Venta"
+            });
+            btnEnviar.disabled = false;
+            btnEnviar.textContent = "✓ Sumar y Compartir";
+          } else {
+            // Alternativa si el navegador no soporta Web Share Level 2
+            alert("Tu navegador no soporta adjuntar la foto directamente. Se abrirá WhatsApp con el texto.");
+            const urlWa = `https://wa.me/?text=${encodeURIComponent(textoMensaje)}`;
             window.location.href = urlWa;
-          }, 600);
+          }
 
         } else {
-          alert("No se detectaron números. Intenta tomar la foto más cerca o con mejor luz.");
+          alert("No se detectaron números claros. Intenta enfocar mejor.");
           btnEnviar.disabled = false;
           btnEnviar.textContent = "✓ Reintentar";
         }
       } catch (err) {
-        alert("Error de conexión: " + err.message);
+        // Si el usuario canceló la hoja de compartir no mostramos error
+        if (err.name !== "AbortError") {
+          alert("Error: " + err.message);
+        }
         btnEnviar.disabled = false;
-        btnEnviar.textContent = "✓ Sumar y Enviar";
+        btnEnviar.textContent = "✓ Sumar y Compartir";
       }
     }
 
